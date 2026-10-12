@@ -1,0 +1,953 @@
+<!doctype html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>SoliCheck</title>
+<meta name="description" content="SoliCheck — the main contractor's subcontractor file under Swiss joint liability: status computed per document, the whole chain, on-site checks, Excel import. A demo with invented data.">
+<meta property="og:title" content="SoliCheck">
+<meta property="og:description" content="The subcontractor file under Swiss joint liability, as a web application. A demo with invented data.">
+<meta property="og:type" content="website">
+<meta name="robots" content="noindex">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans+Condensed:wght@500;600;700&family=IBM+Plex+Serif:ital,wght@0,400;0,600;1,400&display=swap">
+<style>
+  :root{
+    color-scheme: light;
+    --paper:#F5F6F9;
+    --surface:#FFFFFF;
+    --surface-2:#EFF1F6;
+    --ink:#14181F;
+    --ink-2:#464E5D;
+    --ink-3:#6A7382;
+    --rule:#DBDFE7;
+    --rule-strong:#C3C9D4;
+    --accent:#0E6E85;
+    --accent-soft:#E3F2F6;
+    --signal:#0F6F66;
+    --signal-soft:#E4F2F0;
+
+    --f-display:"IBM Plex Sans Condensed","Helvetica Neue",Arial,sans-serif;
+    --f-body:"IBM Plex Serif",Georgia,"Times New Roman",serif;
+    --f-mono:"IBM Plex Mono",ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;
+
+    --gut:clamp(1rem,4vw,3rem);
+    --maxw:72rem;
+  }
+  @media (prefers-color-scheme: dark){
+    :root:not([data-theme="light"]){
+      color-scheme: dark;
+      --paper:#0C0F15;
+      --surface:#131822;
+      --surface-2:#1A2029;
+      --ink:#E8ECF3;
+      --ink-2:#A7B0BF;
+      --ink-3:#838C9E;
+      --rule:#242B37;
+      --rule-strong:#333C4B;
+      --accent:#5CC8DE;
+      --accent-soft:#10303A;
+      --signal:#4FCFBD;
+      --signal-soft:#11302D;
+    }
+  }
+  :root[data-theme="dark"]{
+    color-scheme: dark;
+    --paper:#0C0F15; --surface:#131822; --surface-2:#1A2029;
+    --ink:#E8ECF3; --ink-2:#A7B0BF; --ink-3:#838C9E;
+    --rule:#242B37; --rule-strong:#333C4B;
+    --accent:#5CC8DE; --accent-soft:#10303A;
+    --signal:#4FCFBD; --signal-soft:#11302D;
+  }
+
+  *{box-sizing:border-box}
+  html{-webkit-text-size-adjust:100%}
+  body{
+    margin:0; background:var(--paper); color:var(--ink);
+    font-family:var(--f-body); font-size:1rem; line-height:1.62;
+    font-feature-settings:"kern" 1;
+  }
+  img{max-width:100%}
+  a{color:var(--accent); text-underline-offset:.18em; text-decoration-thickness:.06em}
+  a:hover{text-decoration-thickness:.12em}
+  :focus-visible{outline:2px solid var(--accent); outline-offset:3px; border-radius:2px}
+  code{font-family:var(--f-mono); font-size:.88em; background:var(--surface-2); padding:.08em .32em; border-radius:3px}
+  em{font-style:italic}
+
+  .wrap{max-width:var(--maxw); margin-inline:auto; padding-inline:var(--gut)}
+
+  /* ---------- top bar ---------- */
+  .bar{
+    position:sticky; top:0; z-index:20;
+    background:color-mix(in srgb, var(--paper) 88%, transparent);
+    backdrop-filter:saturate(1.4) blur(10px);
+    border-bottom:1px solid var(--rule);
+    padding-block:.6rem;
+    padding-top:calc(.6rem + env(safe-area-inset-top,0px));
+  }
+  .bar__in{display:flex; align-items:center; justify-content:space-between; gap:1rem; flex-wrap:wrap}
+  .mark{
+    font-family:var(--f-mono); font-weight:600; font-size:.78rem;
+    letter-spacing:.14em; text-transform:uppercase; color:var(--ink);
+    display:flex; align-items:center; gap:.55rem;
+  }
+  .mark i{width:.5rem; height:.5rem; background:var(--accent); display:block; flex:none}
+  .langs{display:flex; gap:.15rem}
+  .langs button{
+    font-family:var(--f-mono); font-size:.72rem; font-weight:500; letter-spacing:.1em;
+    text-transform:uppercase; color:var(--ink-3);
+    background:transparent; border:1px solid transparent; border-radius:3px;
+    padding:.34rem .5rem; cursor:pointer; line-height:1;
+  }
+  .langs button:hover{color:var(--ink)}
+  .langs button[aria-pressed="true"]{color:var(--accent); border-color:var(--rule-strong); background:var(--surface)}
+
+  /* ---------- hero ---------- */
+  .hero{padding-block:clamp(2.75rem,7vw,5.5rem) clamp(2rem,5vw,3.5rem)}
+  .eyebrow{
+    font-family:var(--f-mono); font-size:.72rem; letter-spacing:.16em;
+    text-transform:uppercase; color:var(--accent); margin:0 0 1.4rem;
+  }
+  h1{
+    font-family:var(--f-display); font-weight:700;
+    font-size:clamp(3rem,11vw,6.5rem); line-height:.92; letter-spacing:-.02em;
+    margin:0 0 1.6rem; text-wrap:balance;
+  }
+  .deck{
+    font-size:clamp(1.06rem,2.1vw,1.3rem); line-height:1.55; color:var(--ink-2);
+    max-width:46ch; margin:0 0 2.6rem;
+  }
+  .deck strong{color:var(--ink); font-weight:600}
+
+  .facts{
+    display:grid; grid-template-columns:repeat(auto-fit,minmax(11rem,1fr));
+    gap:1px; background:var(--rule); border-block:1px solid var(--rule);
+  }
+  .fact{background:var(--paper); padding:.95rem 1rem .95rem 0}
+  .facts .fact:not(:first-child){padding-left:1rem}
+  .fact dt{
+    font-family:var(--f-mono); font-size:.66rem; letter-spacing:.14em;
+    text-transform:uppercase; color:var(--ink-3); margin:0 0 .35rem;
+  }
+  .fact dd{margin:0; font-family:var(--f-display); font-weight:600; font-size:1.02rem; line-height:1.3}
+
+  .stack{
+    margin-top:1.6rem; font-family:var(--f-mono); font-size:.76rem; line-height:2.1;
+    color:var(--ink-3); word-spacing:.1em;
+  }
+  .stack b{color:var(--ink-2); font-weight:500}
+
+  /* ---------- figures ---------- */
+  figure{margin:0}
+  .shot{
+    display:block; width:100%; height:auto;
+    border:1px solid var(--rule-strong); border-radius:4px; background:var(--surface);
+    box-shadow:0 1px 2px rgba(15,20,30,.05), 0 10px 30px rgba(15,20,30,.07);
+  }
+  figcaption{
+    margin-top:.9rem; display:grid; grid-template-columns:4.5rem minmax(0,1fr); gap:0 1rem;
+    font-size:.9rem; color:var(--ink-2); line-height:1.58; max-width:62ch;
+  }
+  figcaption b{
+    font-family:var(--f-mono); font-size:.7rem; font-weight:500; letter-spacing:.12em;
+    text-transform:uppercase; color:var(--accent); padding-top:.22rem;
+  }
+  .hero-figure{margin-top:clamp(2rem,4vw,2.75rem)}
+  .gallery{display:grid; gap:clamp(2.25rem,4.5vw,3.25rem)}
+
+  /* ---------- sections ---------- */
+  section{padding-block:clamp(2.75rem,6vw,4.75rem); border-top:1px solid var(--rule-strong)}
+  .s-head{display:grid; grid-template-columns:6.5rem minmax(0,1fr); gap:0 2rem; margin-bottom:2.4rem}
+  .s-num{
+    font-family:var(--f-mono); font-size:.72rem; letter-spacing:.12em; color:var(--accent);
+    padding-top:.45rem;
+  }
+  h2{
+    font-family:var(--f-display); font-weight:700; font-size:clamp(1.6rem,3.4vw,2.25rem);
+    line-height:1.12; letter-spacing:-.01em; margin:0 0 .85rem; text-wrap:balance;
+  }
+  .lead{margin:0; color:var(--ink-2); max-width:58ch; font-size:1.02rem}
+
+  /* capabilities */
+  .caps{display:grid; grid-template-columns:repeat(auto-fit,minmax(17rem,1fr)); gap:1px; background:var(--rule)}
+  .cap{background:var(--surface); padding:1.5rem 1.4rem}
+  .cap h3{
+    font-family:var(--f-mono); font-size:.72rem; font-weight:600; letter-spacing:.12em;
+    text-transform:uppercase; color:var(--accent); margin:0 0 .7rem;
+  }
+  .cap p{margin:0; font-size:.95rem; color:var(--ink-2); line-height:1.6}
+
+  /* clauses */
+  .clause{
+    display:grid; grid-template-columns:6.5rem minmax(0,1fr); gap:0 2rem;
+    border-top:1px solid var(--rule); padding-block:1.9rem;
+  }
+  .clause:last-child{border-bottom:1px solid var(--rule)}
+  .clause__i{font-family:var(--f-mono); font-size:.72rem; letter-spacing:.12em; color:var(--accent); padding-top:.4rem}
+  .clause h3{
+    font-family:var(--f-display); font-weight:600; font-size:1.18rem; line-height:1.28;
+    margin:0 0 .7rem; letter-spacing:-.005em;
+  }
+  .clause p{margin:0; color:var(--ink-2); max-width:64ch}
+  .measure{
+    margin-top:1rem !important; padding:.75rem .9rem;
+    border-left:2px solid var(--signal); background:var(--signal-soft);
+    font-family:var(--f-mono); font-size:.79rem; line-height:1.62; color:var(--ink-2);
+  }
+  .measure em{font-style:normal; color:var(--ink); font-weight:500}
+
+  /* ledger */
+  .ledger-wrap{overflow-x:auto}
+  table{border-collapse:collapse; width:100%; min-width:32rem}
+  th,td{text-align:left; padding:.85rem .6rem; border-bottom:1px solid var(--rule); vertical-align:baseline}
+  thead th{
+    font-family:var(--f-mono); font-size:.66rem; letter-spacing:.14em; text-transform:uppercase;
+    color:var(--ink-3); font-weight:500; border-bottom-color:var(--rule-strong); padding-top:0;
+  }
+  td.k{font-family:var(--f-display); font-weight:600; font-size:1rem; white-space:nowrap}
+  td.v{
+    font-family:var(--f-mono); font-variant-numeric:tabular-nums; font-weight:500;
+    font-size:1.12rem; color:var(--accent); text-align:right; white-space:nowrap; width:1%;
+  }
+  td.n{color:var(--ink-2); font-size:.92rem}
+  tbody tr:last-child td{border-bottom:none}
+
+  /* diagram */
+  .layer{border-top:1px solid var(--rule); padding-block:1.35rem; display:grid; grid-template-columns:6.5rem minmax(0,1fr); gap:0 2rem}
+  .layer:last-of-type{border-bottom:1px solid var(--rule)}
+  .layer__l{font-family:var(--f-mono); font-size:.66rem; letter-spacing:.14em; text-transform:uppercase; color:var(--ink-3); padding-top:.5rem}
+  .nodes{display:flex; flex-wrap:wrap; gap:.5rem}
+  .node{
+    font-family:var(--f-mono); font-size:.79rem; color:var(--ink);
+    border:1px solid var(--rule-strong); background:var(--surface);
+    padding:.42rem .7rem; border-radius:3px;
+  }
+  .node.core{border-color:var(--accent); color:var(--accent); background:var(--accent-soft)}
+  .node.local{border-color:var(--signal); color:var(--signal); background:var(--signal-soft)}
+  .legend{margin-top:1.1rem; font-family:var(--f-mono); font-size:.72rem; color:var(--ink-3); display:flex; gap:1.4rem; flex-wrap:wrap}
+  .legend span{display:flex; align-items:center; gap:.45rem}
+  .swatch{width:.62rem; height:.62rem; border:1px solid var(--rule-strong); flex:none}
+  .swatch.local{border-color:var(--signal); background:var(--signal-soft)}
+  .swatch.paid{border-color:var(--rule-strong); background:var(--surface)}
+
+  /* practices */
+  .practices{display:grid; gap:1px; background:var(--rule); border-block:1px solid var(--rule)}
+  .practice{background:var(--paper); padding:1.35rem 0; display:grid; grid-template-columns:6.5rem minmax(0,1fr); gap:0 2rem}
+  .practice__i{font-family:var(--f-mono); font-size:.72rem; color:var(--accent); letter-spacing:.12em; padding-top:.3rem}
+  .practice h3{font-family:var(--f-display); font-weight:600; font-size:1.05rem; margin:0 0 .4rem}
+  .practice p{margin:0; color:var(--ink-2); font-size:.95rem; max-width:62ch}
+
+  /* footer */
+  footer{border-top:1px solid var(--rule-strong); padding-block:2.5rem 3.5rem; padding-bottom:calc(3.5rem + env(safe-area-inset-bottom,0px))}
+  .foot{display:flex; justify-content:space-between; gap:1.5rem; flex-wrap:wrap; align-items:flex-start}
+  .foot p{margin:0; color:var(--ink-3); font-size:.9rem; max-width:44ch}
+  .sig{font-family:var(--f-mono); font-size:.79rem; color:var(--ink-2); line-height:1.9}
+  .sig b{color:var(--ink); font-weight:600; letter-spacing:.06em; text-transform:uppercase; font-size:.76rem}
+
+  @media (max-width:760px){
+    .s-head,.clause,.layer,.practice,figcaption{grid-template-columns:minmax(0,1fr); gap:.55rem}
+    .s-num,.clause__i,.layer__l,.practice__i{padding-top:0}
+    .facts .fact:not(:first-child){padding-left:0}
+    .fact{padding-right:0}
+  }
+  @media (prefers-reduced-motion:reduce){*{animation:none !important; transition:none !important}}
+  @media print{
+    .bar{display:none}
+    body{background:#fff; color:#000; font-size:10.5pt}
+    section{break-inside:auto}
+    .clause,.cap,.practice{break-inside:avoid}
+  }
+</style>
+</head>
+
+<body>
+
+<div class="bar">
+  <div class="wrap bar__in">
+    <div class="mark"><i></i>SoliCheck</div>
+    <div class="langs" role="group" aria-label="Sprache / Langue / Lingua / Language / Limba">
+      <button type="button" data-lang="de" aria-pressed="false">DE</button>
+      <button type="button" data-lang="fr" aria-pressed="false">FR</button>
+      <button type="button" data-lang="it" aria-pressed="false">IT</button>
+      <button type="button" data-lang="en" aria-pressed="false">EN</button>
+      <button type="button" data-lang="ro" aria-pressed="false">RO</button>
+    </div>
+  </div>
+</div>
+
+<header class="wrap hero">
+  <p class="eyebrow" data-t="hero.eyebrow"></p>
+  <h1>SoliCheck</h1>
+  <p class="deck" data-h="hero.deck"></p>
+
+  <dl class="facts">
+    <div class="fact"><dt data-t="fact.role.k"></dt><dd data-t="fact.role.v"></dd></div>
+    <div class="fact"><dt data-t="fact.period.k"></dt><dd data-t="fact.period.v"></dd></div>
+    <div class="fact"><dt data-t="fact.scale.k"></dt><dd data-t="fact.scale.v"></dd></div>
+    <div class="fact"><dt data-t="fact.state.k"></dt><dd data-t="fact.state.v"></dd></div>
+  </dl>
+
+  <p class="stack"><b>Spring Boot 4.1</b> · <b>Java 21+</b> · <b>Angular 21</b> · <b>PostgreSQL 17</b> · <b>Flyway</b> · <b>Apache POI</b> · <b>Spring Security / JWT</b> · <b>ngx-translate</b> · <b>Playwright</b></p>
+
+  <figure class="hero-figure">
+    <img class="shot" data-shot="dashboard" width="2720" height="1700" alt="">
+    <figcaption><b data-t="hero.label"></b><span data-t="hero.caption"></span></figcaption>
+  </figure>
+</header>
+
+<main>
+
+<section class="wrap">
+  <div class="s-head">
+    <div class="s-num">§ 01</div>
+    <div>
+      <h2 data-t="s1.title"></h2>
+      <p class="lead" data-t="s1.lead"></p>
+    </div>
+  </div>
+  <div class="caps">
+    <article class="cap"><h3 data-t="cap.light.l"></h3><p data-t="cap.light.t"></p></article>
+    <article class="cap"><h3 data-t="cap.chain.l"></h3><p data-t="cap.chain.t"></p></article>
+    <article class="cap"><h3 data-t="cap.file.l"></h3><p data-t="cap.file.t"></p></article>
+    <article class="cap"><h3 data-t="cap.mail.l"></h3><p data-t="cap.mail.t"></p></article>
+    <article class="cap"><h3 data-t="cap.check.l"></h3><p data-t="cap.check.t"></p></article>
+    <article class="cap"><h3 data-t="cap.excel.l"></h3><p data-t="cap.excel.t"></p></article>
+  </div>
+</section>
+
+<section class="wrap">
+  <div class="s-head">
+    <div class="s-num">§ 02</div>
+    <div>
+      <h2 data-t="s2.title"></h2>
+      <p class="lead" data-t="s2.lead"></p>
+    </div>
+  </div>
+  <div class="gallery">
+    <figure>
+      <img class="shot" data-shot="excel" width="2720" height="1700" loading="lazy" alt="">
+      <figcaption><b data-t="fig.n1"></b><span data-t="fig.excel"></span></figcaption>
+    </figure>
+    <figure>
+      <img class="shot" data-shot="import-preview" width="2720" height="1700" loading="lazy" alt="">
+      <figcaption><b data-t="fig.n2"></b><span data-t="fig.import"></span></figcaption>
+    </figure>
+    <figure>
+      <img class="shot" data-shot="dashboard" width="2720" height="1700" loading="lazy" alt="">
+      <figcaption><b data-t="fig.n3"></b><span data-t="fig.dashboard"></span></figcaption>
+    </figure>
+    <figure>
+      <img class="shot" data-shot="chain" width="2720" height="1700" loading="lazy" alt="">
+      <figcaption><b data-t="fig.n4"></b><span data-t="fig.chain"></span></figcaption>
+    </figure>
+    <figure>
+      <img class="shot" data-shot="subcontractors" width="2720" height="1700" loading="lazy" alt="">
+      <figcaption><b data-t="fig.n5"></b><span data-t="fig.list"></span></figcaption>
+    </figure>
+    <figure>
+      <img class="shot" data-shot="subcontractor" width="2720" height="1700" loading="lazy" alt="">
+      <figcaption><b data-t="fig.n6"></b><span data-t="fig.file"></span></figcaption>
+    </figure>
+    <figure>
+      <img class="shot" data-shot="reminders" width="2720" height="1700" loading="lazy" alt="">
+      <figcaption><b data-t="fig.n7"></b><span data-t="fig.reminders"></span></figcaption>
+    </figure>
+    <figure>
+      <img class="shot" data-shot="check" width="2720" height="1700" loading="lazy" alt="">
+      <figcaption><b data-t="fig.n8"></b><span data-t="fig.check"></span></figcaption>
+    </figure>
+    <figure>
+      <img class="shot" data-shot="proof" width="2720" height="1700" loading="lazy" alt="">
+      <figcaption><b data-t="fig.n9"></b><span data-t="fig.proof"></span></figcaption>
+    </figure>
+  </div>
+</section>
+
+<section class="wrap">
+  <div class="s-head">
+    <div class="s-num">§ 03</div>
+    <div>
+      <h2 data-t="s3.title"></h2>
+      <p class="lead" data-t="s3.lead"></p>
+    </div>
+  </div>
+
+  <article class="clause"><div class="clause__i">3.1</div><div>
+    <h3 data-t="c1.t"></h3><p data-h="c1.b"></p><p class="measure" data-h="c1.m"></p>
+  </div></article>
+  <article class="clause"><div class="clause__i">3.2</div><div>
+    <h3 data-t="c2.t"></h3><p data-h="c2.b"></p>
+  </div></article>
+  <article class="clause"><div class="clause__i">3.3</div><div>
+    <h3 data-t="c3.t"></h3><p data-h="c3.b"></p>
+  </div></article>
+  <article class="clause"><div class="clause__i">3.4</div><div>
+    <h3 data-t="c4.t"></h3><p data-h="c4.b"></p>
+  </div></article>
+  <article class="clause"><div class="clause__i">3.5</div><div>
+    <h3 data-t="c5.t"></h3><p data-h="c5.b"></p>
+  </div></article>
+  <article class="clause"><div class="clause__i">3.6</div><div>
+    <h3 data-t="c6.t"></h3><p data-h="c6.b"></p>
+  </div></article>
+  <article class="clause"><div class="clause__i">3.7</div><div>
+    <h3 data-t="c7.t"></h3><p data-h="c7.b"></p>
+  </div></article>
+  <article class="clause"><div class="clause__i">3.8</div><div>
+    <h3 data-t="c8.t"></h3><p data-h="c8.b"></p>
+  </div></article>
+</section>
+
+<section class="wrap">
+  <div class="s-head">
+    <div class="s-num">§ 04</div>
+    <div>
+      <h2 data-t="s4.title"></h2>
+      <p class="lead" data-t="s4.lead"></p>
+    </div>
+  </div>
+  <div class="ledger-wrap">
+    <table>
+      <thead>
+        <tr>
+          <th data-t="tbl.item"></th>
+          <th style="text-align:right" data-t="tbl.value"></th>
+          <th data-t="tbl.note"></th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr><td class="k" data-t="m1.k"></td><td class="v">6 023</td><td class="n" data-t="m1.n"></td></tr>
+        <tr><td class="k" data-t="m2.k"></td><td class="v">15</td><td class="n" data-t="m2.n"></td></tr>
+        <tr><td class="k" data-t="m3.k"></td><td class="v">4</td><td class="n" data-t="m3.n"></td></tr>
+        <tr><td class="k" data-t="m4.k"></td><td class="v">8</td><td class="n" data-t="m4.n"></td></tr>
+        <tr><td class="k" data-t="m5.k"></td><td class="v">9</td><td class="n" data-t="m5.n"></td></tr>
+        <tr><td class="k" data-t="m6.k"></td><td class="v">2</td><td class="n" data-t="m6.n"></td></tr>
+      </tbody>
+    </table>
+  </div>
+</section>
+
+<section class="wrap">
+  <div class="s-head">
+    <div class="s-num">§ 05</div>
+    <div>
+      <h2 data-t="s5.title"></h2>
+      <p class="lead" data-t="s5.lead"></p>
+    </div>
+  </div>
+
+  <div class="layer">
+    <div class="layer__l" data-t="arch.surfaces"></div>
+    <div class="nodes">
+      <span class="node" data-t="arch.web"></span>
+      <span class="node" data-t="arch.phone"></span>
+      <span class="node" data-t="arch.excel"></span>
+      <span class="node" data-t="arch.mail"></span>
+    </div>
+  </div>
+  <div class="layer">
+    <div class="layer__l" data-t="arch.core"></div>
+    <div class="nodes">
+      <span class="node core" data-t="arch.core.node"></span>
+    </div>
+  </div>
+  <div class="layer">
+    <div class="layer__l" data-t="arch.store"></div>
+    <div class="nodes">
+      <span class="node local">PostgreSQL 17</span>
+      <span class="node local">Flyway</span>
+      <span class="node local" data-t="arch.blob"></span>
+    </div>
+  </div>
+</section>
+
+</main>
+
+<footer class="wrap">
+  <div class="foot">
+    <p data-t="foot.note"></p>
+    <div class="sig"><span data-t="foot.updated"></span></div>
+  </div>
+</footer>
+
+<script>
+const I18N = {
+  de: {
+    "hero.eyebrow":"Webanwendung · von einer Person konzipiert und entwickelt · Demo mit erfundenen Daten",
+    "hero.deck":"In der Schweiz haftet der Erstunternehmer für nicht bezahlte Löhne aller seiner Subunternehmer, über die ganze Kette — ausser er kann belegen, dass er ihre Nachweise eingeholt und geprüft hat. In vielen Betrieben ist dieser Beleg eine von Hand eingefärbte Excel-Liste. <strong>SoliCheck führt das Dossier jedes Subunternehmers und berechnet bei jedem Aufruf, was fehlt und was abläuft.</strong>",
+    "hero.label":"Auftakt",
+    "hero.caption":"Die Übersicht: Jede Baustelle trägt die Farbe des schwächsten Dossiers in ihrer Kette, darunter steht, bei wem etwas anzufordern ist. Dieselbe Ansicht erscheint unten als Abb. 3.",
+    "fact.role.k":"Rolle","fact.role.v":"Analyse, Architektur, Entwicklung",
+    "fact.period.k":"Zeitraum","fact.period.v":"Oktober 2026",
+    "fact.scale.k":"Umfang","fact.scale.v":"6 023 Zeilen, 15 Tests",
+    "fact.state.k":"Stand","fact.state.v":"Lauffähige Demo, erfundene Daten",
+
+    "s1.title":"Was sie tut",
+    "s1.lead":"Ein einziger Ablauf, von Anfang bis Ende: von der Excel-Liste bis zum Nachweis, den Sie bei einer Kontrolle vorlegen. Rechtsgrundlage: Art. 5 Entsendegesetz (EntsG) und Art. 8b Entsendeverordnung (EntsV).",
+    "cap.light.l":"Ampel pro Baustelle",
+    "cap.light.t":"Grün: Das Dossier ist vollständig. Orange: Ein Nachweis läuft in den nächsten 30 Tagen ab. Rot: Ein Nachweis fehlt oder ist abgelaufen. Eine Baustelle trägt die Farbe des schwächsten Dossiers in ihrer Kette.",
+    "cap.chain.l":"Die ganze Kette",
+    "cap.chain.t":"Die Haftung erfasst auch die Subunternehmer der Subunternehmer. Jede Firma steht unter derjenigen, die sie beauftragt hat, so tief die Kette auch reicht.",
+    "cap.file.l":"Das Dossier jeder Firma",
+    "cap.file.t":"SECO-Deklarationen, Bestätigungen von Suva, AHV und BVG, ISAB-Bescheinigung: was gültig ist, bis wann, wer es wann geprüft hat, dazu der Scan des Dokuments.",
+    "cap.mail.l":"Erinnerungen in der Sprache der Firma",
+    "cap.mail.t":"Für jede Firma mit fehlenden oder bald ablaufenden Nachweisen steht die E-Mail bereit, auf Deutsch oder Französisch, je nach Firma. Sie geht aus dem Mailprogramm des Benutzers hinaus; die Anwendung versendet nichts selbst.",
+    "cap.check.l":"Kontrolle auf der Baustelle",
+    "cap.check.t":"Auf dem Handy: anwesende Firmen antippen, eine unbekannte hinzufügen. Die Anwendung zeigt sofort, wessen Dossier unvollständig ist, und die Kontrolle wird mit Datum und Uhrzeit gespeichert.",
+    "cap.excel.l":"Von Excel zum Nachweis",
+    "cap.excel.t":"Die bestehende Liste wird so übernommen, wie sie ist, mit einer Vorschau vor dem Speichern. Am Ende: eine Druckseite mit allen Nachweisen einer Baustelle.",
+
+    "s2.title":"Die Anwendung",
+    "s2.lead":"Bilder aus der Demo, mit erfundenen Daten. Firmen, Personen, Adressen und UID-Nummern (CHE-000.000.1xx) sind ausgedacht, die E-Mail-Adressen enden auf .example, der von RFC 2606 reservierten Domain. Die Oberfläche der Anwendung gibt es auf Deutsch und Französisch: Die französische Seite zeigt die französischen Bilder, alle anderen Sprachen die deutschen.",
+    "fig.n1":"Abb. 1","fig.n2":"Abb. 2","fig.n3":"Abb. 3","fig.n4":"Abb. 4","fig.n5":"Abb. 5","fig.n6":"Abb. 6","fig.n7":"Abb. 7","fig.n8":"Abb. 8","fig.n9":"Abb. 9",
+    "fig.excel":"Der Ausgangspunkt: die Subunternehmer-Liste, wie viele Betriebe sie führen. Eine Zeile pro Firma, eine Spalte pro Nachweis, die Zellen von Hand eingefärbt. Die Farbe ändert sich nicht von selbst, wenn ein Datum verstreicht.",
+    "fig.import":"Dieselbe Datei beim Import. Zuerst erscheint nur, was sich ändern würde: neue Firmen, neue Baustellen, übernommene Nachweise. Gespeichert wird erst nach der Bestätigung.",
+    "fig.dashboard":"Die Übersicht. Unter den Baustellen die Liste «Handlungsbedarf»: wem ein Nachweis fehlt oder bald abläuft, mit dem Ablaufdatum.",
+    "fig.chain":"Die Kette einer Baustelle. Der Personalverleiher, den der Elektriker beigezogen hat, steht unter ihm, und ihm fehlen zwei Nachweise. Genau der Fall, den eine Tabelle mit einer Zeile pro Firma nicht zeigt.",
+    "fig.list":"Alle Subunternehmer, die dringendsten zuerst, mit dem nächsten Ablaufdatum.",
+    "fig.file":"Das Dossier einer Firma: jeder verlangte Nachweis mit seiner Grundlage (Art. 8b EntsV oder Empfehlung der Suva), seinem Stand und seinem Datum. Die Lohndeklaration kann durch die ISAB-Bescheinigung ersetzt werden, deshalb stehen beide auf einer Zeile. Fehlende freiwillige Nachweise sind grau, nicht rot.",
+    "fig.reminders":"Die Erinnerungen: eine pro Firma, nicht eine pro Nachweis. Die Firma aus Romont erhält den Text auf Französisch, auch wenn die Oberfläche deutsch ist.",
+    "fig.check":"Die Kontrolle auf der Baustelle, auf dem Handy, vor und nach dem Speichern. Eine Firma, die auf der Baustelle arbeitet, aber nicht in der Kette steht, erscheint als «Nicht erfasst»: Das ist der schwerste Fall, nicht der leichteste.",
+    "fig.proof":"Der Nachweis für eine Kontrolle: alle Firmen einer Baustelle, jeder Nachweis mit Ausstellungsdatum, Gültigkeit und wer ihn geprüft hat. Für den Druck gemacht.",
+
+    "s3.title":"Entwurfsentscheide",
+    "s3.lead":"Die Anwendung ist klein. Zeigen lohnt sich, was darunter entschieden wurde: jedes Mal, weil die einfachere Variante irgendwann eine falsche Antwort gegeben hätte.",
+    "c1.t":"Der Stand wird berechnet, nicht gespeichert",
+    "c1.b":"Keine Spalte hält «vollständig» oder «abgelaufen» fest. <code>DossierEvaluator</code> erhält die Nachweistypen und die vorhandenen Nachweise und gibt den Stand zurück: reine Logik, ohne Datenbank. Ein gespeicherter Stand müsste jede Nacht nachgeführt werden und wäre zwischen zwei Läufen falsch; ein berechneter stimmt an dem Tag, an dem man ihn liest.",
+    "c1.m":"Die Regel: Pro Anforderung zählt der am längsten gültige Nachweis. Unter <em>30 Tagen</em> ist er orange, abgelaufen oder fehlend rot, und nur Pflichtanforderungen bestimmen die Farbe. Abgedeckt durch 6 Unit-Tests.",
+    "c2.t":"Alternativen, nicht nur Dokumente",
+    "c2.b":"Die Verordnung akzeptiert die Lohndeklaration oder, seit 2023, an ihrer Stelle die ISAB-Bescheinigung. Die Nachweise sind deshalb nach Anforderungen gruppiert (<code>requirement_group</code>), und eine Anforderung ist durch jeden ihrer Nachweise erfüllt. Eine Firma mit ISAB-Bescheinigung erscheint nicht rot, nur weil ihr zusätzlich die Deklaration fehlt.",
+    "c3.t":"Die Kette ist ein Baum",
+    "c3.b":"Jeder Einsatz auf einer Baustelle hat einen <code>parent_id</code> auf den Einsatz der Firma, die ihn beauftragt hat. Eine flache Tabelle kann nicht sagen «arbeitet für den Elektriker»; ein Baum kann es, in jeder Tiefe. Und wird eine Stufe gelöscht, gehen die darunter mit.",
+    "c4.t":"Die Vorschau ist der echte Import, zurückgerollt",
+    "c4.b":"Die Vorschau ist kein zweiter Algorithmus, der errät, was der Import täte. Sie führt genau denselben Code in derselben Transaktion aus, die am Ende mit <code>setRollbackOnly()</code> markiert wird. Was die Vorschau zeigt, ist also schon durch den Aufbau das, was bei der Bestätigung gespeichert wird.",
+    "c5.t":"Die Kontrolle bewahrt die Vergangenheit",
+    "c5.b":"Beim Speichern einer Kontrolle wird der Stand jedes Dossiers in die Kontrollzeile kopiert. Ein Dossier, das morgen ergänzt wird, schreibt nicht um, dass es heute auf der Baustelle unvollständig war. Genau das ist die Frage bei einer Kontrolle: was man wann wusste.",
+    "c6.t":"Erinnerungen ohne Zeitplaner und ohne automatischen Versand",
+    "c6.b":"Die Liste der Erinnerungen wird beim Öffnen berechnet, aus demselben Stand wie die Übersicht; einen Nachtlauf gibt es nicht. Die Anwendung versendet auch keine E-Mails: Sie öffnet das Mailprogramm des Benutzers mit dem fertigen Text. Eine fehlerhafte E-Mail, automatisch an einen Subunternehmer verschickt, ist schlimmer als eine, die zuerst ein Mensch gelesen hat.",
+    "c7.t":"Die Demo-Daten stellen sich selbst wieder her",
+    "c7.b":"Ein Knopf leert die Tabellen (<code>TRUNCATE</code>) und lässt Flyway erneut laufen, das die erfundenen Daten neu lädt. Die Daten sind relativ zum heutigen Tag, so zeigt die Demo immer einen Nachweis, der in ein paar Tagen abläuft, und nicht einen, der seit einem Jahr abgelaufen ist.",
+    "c8.t":"Die Nachweisliste steht nicht im Code",
+    "c8.b":"Die Nachweistypen stehen in einer Tabelle: Name auf Deutsch und Französisch, Rechtsgrundlage, übliche Gültigkeit und ob sie Pflicht sind. Die Liste der Demo folgt den SECO-Musterdeklarationen und den Empfehlungen der Suva und trägt den Vermerk «Beispiel, keine Rechtsberatung». Ein echter Betrieb legt sie mit seinem Verband fest.",
+
+    "s4.title":"Gemessen, nicht behauptet",
+    "s4.lead":"Gezählt im Repository am Tag, an dem diese Seite geschrieben wurde. Die Methode steht im README, damit die nächste Zählung dieselbe ist.",
+    "tbl.item":"Posten","tbl.value":"Wert","tbl.note":"Bemerkung",
+    "m1.k":"Codezeilen","m1.n":"Java, TypeScript, HTML, SCSS, SQL",
+    "m2.k":"Automatische Tests","m2.n":"13 Testmethoden im Backend, 2 Specs im Frontend",
+    "m3.k":"Datenbank-Migrationen","m3.n":"Flyway; das ORM ändert das Schema nie",
+    "m4.k":"Nachweistypen","m4.n":"in 7 Anforderungen, nach SECO und Suva",
+    "m5.k":"Bildschirme","m5.n":"darunter die Handy-Kontrolle und die Druckseite",
+    "m6.k":"Oberflächensprachen","m6.n":"Deutsch und Französisch, je 144 Schlüssel",
+
+    "s5.title":"Architektur",
+    "s5.lead":"Ein Spring-Boot-Kern und eine einzige Datenbank, in der auch die Scans liegen. Keine externen Dienste: Nichts verlässt den Server.",
+    "arch.surfaces":"Oberflächen",
+    "arch.core":"Kern",
+    "arch.store":"Speicher",
+    "arch.web":"Web (Angular 21)",
+    "arch.phone":"Handy (dieselbe Web-App, eigenes Layout)",
+    "arch.excel":"Excel-Import (Apache POI)",
+    "arch.mail":"E-Mail über das Programm des Benutzers (mailto)",
+    "arch.core.node":"Spring Boot 4.1 — 16 Services, 7 REST-Controller, JWT",
+    "arch.blob":"Scans in der Datenbank (BYTEA)",
+
+    "foot.note":"Demo mit erfundenen Daten. Keine Rechtsberatung. Der Quellcode liegt in einem privaten Repository.",
+    "foot.updated":"Aktualisiert: Oktober 2026"
+  },
+  fr: {
+    "hero.eyebrow":"Application web · conçue et développée par une seule personne · démo avec des données fictives",
+    "hero.deck":"En Suisse, l’entrepreneur contractant répond des salaires impayés de tous ses sous-traitants, sur toute la chaîne — sauf s’il peut prouver qu’il a demandé et vérifié leurs justificatifs. Dans beaucoup d’entreprises, cette preuve est un tableau Excel coloré à la main. <strong>SoliCheck tient le dossier de chaque sous-traitant et calcule, à chaque ouverture, ce qui manque et ce qui expire.</strong>",
+    "hero.label":"Ouverture",
+    "hero.caption":"La vue d’ensemble : chaque chantier prend la couleur du dossier le plus faible de sa chaîne, et en dessous figure la liste des entreprises à qui il faut demander quelque chose. La même vue apparaît plus bas comme fig. 3.",
+    "fact.role.k":"Rôle","fact.role.v":"Analyse, architecture, développement",
+    "fact.period.k":"Période","fact.period.v":"Octobre 2026",
+    "fact.scale.k":"Taille","fact.scale.v":"6 023 lignes, 15 tests",
+    "fact.state.k":"État","fact.state.v":"Démo fonctionnelle, données fictives",
+
+    "s1.title":"Ce qu’elle fait",
+    "s1.lead":"Un seul processus, de bout en bout : de la liste Excel au justificatif que vous présentez lors d’un contrôle. Base légale : art. 5 de la loi sur les travailleurs détachés (LDét) et art. 8b de son ordonnance (ODét).",
+    "cap.light.l":"Feu tricolore par chantier",
+    "cap.light.t":"Vert : le dossier est complet. Orange : un justificatif expire dans les 30 prochains jours. Rouge : un justificatif manque ou a expiré. Un chantier prend la couleur du dossier le plus faible de sa chaîne.",
+    "cap.chain.l":"Toute la chaîne",
+    "cap.chain.t":"La responsabilité couvre aussi les sous-traitants des sous-traitants. Chaque entreprise figure sous celle qui l’a mandatée, aussi loin que va la chaîne.",
+    "cap.file.l":"Le dossier de chaque entreprise",
+    "cap.file.t":"Déclarations SECO, attestations Suva, AVS et LPP, attestation SIAC : ce qui est valable, jusqu’à quand, qui l’a vérifié et quand, avec le scan du document.",
+    "cap.mail.l":"Des relances dans la langue de l’entreprise",
+    "cap.mail.t":"Pour chaque entreprise dont un justificatif manque ou va expirer, l’e-mail est prêt, en allemand ou en français selon l’entreprise. Il part de la messagerie de l’utilisateur ; l’application n’envoie rien d’elle-même.",
+    "cap.check.l":"Le contrôle sur le chantier",
+    "cap.check.t":"Sur le téléphone : on touche les entreprises présentes et on en ajoute une inconnue. L’application montre tout de suite qui a un dossier incomplet, et le contrôle est enregistré avec la date et l’heure.",
+    "cap.excel.l":"D’Excel au justificatif",
+    "cap.excel.t":"La liste existante est reprise telle quelle, avec un aperçu avant l’enregistrement. À la fin : une page à imprimer avec tous les justificatifs d’un chantier.",
+
+    "s2.title":"L’application",
+    "s2.lead":"Captures de la démo, avec des données fictives. Les entreprises, les personnes, les adresses et les numéros IDE (CHE-000.000.1xx) sont inventés, et les adresses e-mail se terminent par .example, le domaine réservé par la RFC 2606. L’interface de l’application existe en allemand et en français : la page française montre les captures en français, les autres langues celles en allemand.",
+    "fig.n1":"Fig. 1","fig.n2":"Fig. 2","fig.n3":"Fig. 3","fig.n4":"Fig. 4","fig.n5":"Fig. 5","fig.n6":"Fig. 6","fig.n7":"Fig. 7","fig.n8":"Fig. 8","fig.n9":"Fig. 9",
+    "fig.excel":"Le point de départ : la liste des sous-traitants telle que beaucoup d’entreprises la tiennent. Une ligne par entreprise, une colonne par justificatif, les cellules colorées à la main. La couleur ne change pas toute seule quand une date passe.",
+    "fig.import":"Le même fichier à l’import. D’abord n’apparaît que ce qui changerait : nouvelles entreprises, nouveaux chantiers, justificatifs repris. Rien n’est enregistré avant la confirmation.",
+    "fig.dashboard":"La vue d’ensemble. Sous les chantiers, la liste « À traiter » : à qui il manque un justificatif ou chez qui il va expirer, avec la date d’échéance.",
+    "fig.chain":"La chaîne d’un chantier. L’entreprise de location de personnel engagée par l’électricien figure sous lui, et il lui manque deux justificatifs. Exactement le cas qu’un tableau avec une ligne par entreprise ne montre pas.",
+    "fig.list":"Tous les sous-traitants, les plus urgents d’abord, avec la prochaine échéance.",
+    "fig.file":"Le dossier d’une entreprise : chaque justificatif exigé, avec sa base (art. 8b ODét ou recommandation de la Suva), son état et sa date. La déclaration sur les salaires peut être remplacée par l’attestation SIAC, c’est pourquoi les deux figurent sur la même ligne. Les justificatifs facultatifs manquants sont gris, pas rouges.",
+    "fig.reminders":"Les relances : une par entreprise, pas une par justificatif. Chaque entreprise reçoit le texte dans sa propre langue, quelle que soit la langue de l’interface.",
+    "fig.check":"Le contrôle sur le chantier, sur le téléphone, avant et après l’enregistrement. Une entreprise qui travaille sur le chantier sans figurer dans la chaîne apparaît comme « Non saisie » : c’est le cas le plus grave, pas le plus léger.",
+    "fig.proof":"Le justificatif pour un contrôle : toutes les entreprises d’un chantier, chaque document avec sa date d’émission, sa validité et qui l’a vérifié. Pensé pour l’impression.",
+
+    "s3.title":"Choix de conception",
+    "s3.lead":"L’application est petite. Ce qui vaut la peine d’être montré, ce sont les décisions en dessous : chacune a été prise parce que la variante plus simple aurait, à un moment donné, donné une mauvaise réponse.",
+    "c1.t":"L’état est calculé, pas enregistré",
+    "c1.b":"Aucune colonne ne contient « complet » ou « expiré ». <code>DossierEvaluator</code> reçoit les types de justificatifs et les justificatifs présents et rend l’état : de la logique pure, sans base de données. Un état enregistré devrait être mis à jour chaque nuit et serait faux entre deux mises à jour ; un état calculé est juste le jour où on le lit.",
+    "c1.m":"La règle : pour chaque exigence compte le justificatif valable le plus longtemps. Sous <em>30 jours</em> il est orange, expiré ou manquant il est rouge, et seules les exigences obligatoires décident de la couleur. Couverte par 6 tests unitaires.",
+    "c2.t":"Des alternatives, pas seulement des documents",
+    "c2.b":"L’ordonnance accepte la déclaration sur les salaires ou, depuis 2023, l’attestation SIAC à sa place. Les justificatifs sont donc groupés par exigence (<code>requirement_group</code>), et une exigence est remplie par n’importe lequel de ses justificatifs. Une entreprise qui a l’attestation SIAC n’apparaît pas en rouge simplement parce qu’il lui manque aussi la déclaration.",
+    "c3.t":"La chaîne est un arbre",
+    "c3.b":"Chaque intervention sur un chantier porte un <code>parent_id</code> vers l’intervention de l’entreprise qui l’a mandatée. Un tableau plat ne peut pas dire « travaille pour l’électricien » ; un arbre le peut, à n’importe quelle profondeur. Et supprimer un niveau emporte ceux qui sont en dessous.",
+    "c4.t":"L’aperçu est le vrai import, annulé",
+    "c4.b":"L’aperçu n’est pas un second algorithme qui devine ce que ferait l’import. Il exécute exactement le même code, dans la même transaction, marquée à la fin par <code>setRollbackOnly()</code>. Ce que montre l’aperçu est donc, par construction, ce qui est enregistré à la confirmation.",
+    "c5.t":"Le contrôle garde le passé",
+    "c5.b":"À l’enregistrement d’un contrôle, l’état de chaque dossier est copié dans la ligne du contrôle. Un dossier complété demain ne réécrit pas le fait qu’aujourd’hui, sur le chantier, il était incomplet. C’est exactement la question posée lors d’un contrôle : ce que l’on savait, et quand.",
+    "c6.t":"Des relances sans planificateur et sans envoi automatique",
+    "c6.b":"La liste des relances est calculée à l’ouverture, à partir du même état que la vue d’ensemble ; il n’y a pas de traitement de nuit. L’application n’envoie pas non plus d’e-mails : elle ouvre la messagerie de l’utilisateur avec le texte prêt. Un e-mail erroné, envoyé automatiquement à un sous-traitant, est pire qu’un e-mail relu d’abord par une personne.",
+    "c7.t":"Les données de démo se rétablissent seules",
+    "c7.b":"Un bouton vide les tables (<code>TRUNCATE</code>) et relance Flyway, qui recharge les données fictives. Les dates sont relatives au jour même, si bien que la démo montre toujours un justificatif qui expire dans quelques jours, et non un justificatif expiré depuis un an.",
+    "c8.t":"La liste des justificatifs n’est pas écrite dans le code",
+    "c8.b":"Les types de justificatifs sont dans une table : nom en allemand et en français, base légale, validité habituelle et caractère obligatoire. La liste de la démo suit les déclarations types du SECO et les recommandations de la Suva et porte la mention « exemple, pas un conseil juridique ». Une vraie entreprise la fixe avec son association professionnelle.",
+
+    "s4.title":"Mesuré, pas affirmé",
+    "s4.lead":"Compté dans le dépôt le jour où cette page a été écrite. La méthode est décrite dans le README, pour que le prochain comptage soit le même.",
+    "tbl.item":"Poste","tbl.value":"Valeur","tbl.note":"Remarque",
+    "m1.k":"Lignes de code","m1.n":"Java, TypeScript, HTML, SCSS, SQL",
+    "m2.k":"Tests automatisés","m2.n":"13 méthodes de test côté backend, 2 specs côté frontend",
+    "m3.k":"Migrations de base de données","m3.n":"Flyway ; l’ORM ne modifie jamais le schéma",
+    "m4.k":"Types de justificatifs","m4.n":"en 7 exigences, selon le SECO et la Suva",
+    "m5.k":"Écrans","m5.n":"dont le contrôle sur téléphone et la page à imprimer",
+    "m6.k":"Langues d’interface","m6.n":"allemand et français, 144 clés chacune",
+
+    "s5.title":"Architecture",
+    "s5.lead":"Un noyau Spring Boot et une seule base de données, qui contient aussi les scans. Aucun service externe : rien ne quitte le serveur.",
+    "arch.surfaces":"Surfaces",
+    "arch.core":"Noyau",
+    "arch.store":"Stockage",
+    "arch.web":"Web (Angular 21)",
+    "arch.phone":"Téléphone (la même application web, autre mise en page)",
+    "arch.excel":"Import Excel (Apache POI)",
+    "arch.mail":"E-mail par la messagerie de l’utilisateur (mailto)",
+    "arch.core.node":"Spring Boot 4.1 — 16 services, 7 contrôleurs REST, JWT",
+    "arch.blob":"Scans conservés dans la base de données (BYTEA)",
+
+    "foot.note":"Démo avec des données fictives. Pas un conseil juridique. Le code source se trouve dans un dépôt privé.",
+    "foot.updated":"Mis à jour : octobre 2026"
+  },
+  it: {
+    "hero.eyebrow":"Applicazione web · progettata e sviluppata da una sola persona · demo con dati inventati",
+    "hero.deck":"In Svizzera l’impresa appaltatrice risponde dei salari non pagati di tutti i suoi subappaltatori, lungo tutta la catena — a meno che possa dimostrare di averne chiesto e verificato i documenti. In molte imprese questa prova è una tabella Excel colorata a mano. <strong>SoliCheck tiene il dossier di ogni subappaltatore e calcola, a ogni apertura, che cosa manca e che cosa scade.</strong>",
+    "hero.label":"Apertura",
+    "hero.caption":"La panoramica: ogni cantiere prende il colore del dossier più debole della sua catena, e sotto c’è l’elenco delle ditte a cui va chiesto qualcosa. La stessa vista compare più sotto come fig. 3.",
+    "fact.role.k":"Ruolo","fact.role.v":"Analisi, architettura, sviluppo",
+    "fact.period.k":"Periodo","fact.period.v":"Ottobre 2026",
+    "fact.scale.k":"Dimensione","fact.scale.v":"6 023 righe, 15 test",
+    "fact.state.k":"Stato","fact.state.v":"Demo funzionante, dati inventati",
+
+    "s1.title":"Che cosa fa",
+    "s1.lead":"Un solo processo, dall’inizio alla fine: dall’elenco in Excel alla prova che si presenta durante un controllo. Base legale: art. 5 della legge sui lavoratori distaccati (LDist) e art. 8b della relativa ordinanza (ODist).",
+    "cap.light.l":"Semaforo per cantiere",
+    "cap.light.t":"Verde: il dossier è completo. Arancione: un documento scade nei prossimi 30 giorni. Rosso: un documento manca o è scaduto. Un cantiere prende il colore del dossier più debole della sua catena.",
+    "cap.chain.l":"Tutta la catena",
+    "cap.chain.t":"La responsabilità copre anche i subappaltatori dei subappaltatori. Ogni ditta sta sotto quella che l’ha incaricata, per quanto profonda sia la catena.",
+    "cap.file.l":"Il dossier di ogni ditta",
+    "cap.file.t":"Dichiarazioni SECO, attestati Suva, AVS e LPP, attestato ISAB: che cosa è valido, fino a quando, chi l’ha verificato e quando, con la scansione del documento.",
+    "cap.mail.l":"Promemoria nella lingua della ditta",
+    "cap.mail.t":"Per ogni ditta con documenti mancanti o in scadenza l’e-mail è già scritta, in tedesco o in francese a seconda della ditta. Parte dal programma di posta dell’utente; l’applicazione non invia nulla da sola.",
+    "cap.check.l":"Il controllo in cantiere",
+    "cap.check.t":"Sul telefono: si toccano le ditte presenti e se ne aggiunge una sconosciuta. L’applicazione mostra subito chi ha il dossier incompleto, e il controllo viene salvato con data e ora.",
+    "cap.excel.l":"Da Excel alla prova",
+    "cap.excel.t":"L’elenco esistente viene ripreso così com’è, con un’anteprima prima del salvataggio. Alla fine: una pagina da stampare con tutte le prove di un cantiere.",
+
+    "s2.title":"L’applicazione",
+    "s2.lead":"Schermate della demo, con dati inventati. Ditte, persone, indirizzi e numeri IDI (CHE-000.000.1xx) sono immaginari, e gli indirizzi e-mail finiscono in .example, il dominio riservato dalla RFC 2606. L’interfaccia dell’applicazione esiste in tedesco e in francese: la pagina francese mostra le schermate in francese, le altre lingue quelle in tedesco.",
+    "fig.n1":"Fig. 1","fig.n2":"Fig. 2","fig.n3":"Fig. 3","fig.n4":"Fig. 4","fig.n5":"Fig. 5","fig.n6":"Fig. 6","fig.n7":"Fig. 7","fig.n8":"Fig. 8","fig.n9":"Fig. 9",
+    "fig.excel":"Il punto di partenza: l’elenco dei subappaltatori come lo tengono molte imprese. Una riga per ditta, una colonna per documento, le celle colorate a mano. Il colore non cambia da solo quando una data passa.",
+    "fig.import":"Lo stesso file all’importazione. Prima compare solo ciò che cambierebbe: nuove ditte, nuovi cantieri, documenti ripresi. Si salva qualcosa solo dopo la conferma.",
+    "fig.dashboard":"La panoramica. Sotto i cantieri, l’elenco «Handlungsbedarf» (da fare): a chi manca un documento o a chi sta per scadere, con la data di scadenza.",
+    "fig.chain":"La catena di un cantiere. L’agenzia di personale chiamata dall’elettricista sta sotto di lui, e le mancano due documenti. Proprio il caso che una tabella con una riga per ditta non mostra.",
+    "fig.list":"Tutti i subappaltatori, i più urgenti per primi, con la prossima scadenza.",
+    "fig.file":"Il dossier di una ditta: ogni documento richiesto, con la sua base (art. 8b ODist o raccomandazione della Suva), lo stato e la data. La dichiarazione sui salari può essere sostituita dall’attestato ISAB, per questo stanno sulla stessa riga. I documenti facoltativi mancanti sono grigi, non rossi.",
+    "fig.reminders":"I promemoria: uno per ditta, non uno per documento. La ditta di Romont riceve il testo in francese, anche se l’interfaccia è in tedesco.",
+    "fig.check":"Il controllo in cantiere, sul telefono, prima e dopo il salvataggio. Una ditta che lavora in cantiere ma non è nella catena compare come «Nicht erfasst» (non registrata): è il caso più grave, non il più lieve.",
+    "fig.proof":"La prova per un controllo: tutte le ditte di un cantiere, ogni documento con data di emissione, validità e chi l’ha verificato. Pensata per la stampa.",
+
+    "s3.title":"Scelte di progettazione",
+    "s3.lead":"L’applicazione è piccola. Ciò che vale la pena mostrare sono le decisioni sottostanti: ognuna presa perché la variante più semplice avrebbe dato, prima o poi, una risposta sbagliata.",
+    "c1.t":"Lo stato si calcola, non si salva",
+    "c1.b":"Nessuna colonna contiene «completo» o «scaduto». <code>DossierEvaluator</code> riceve i tipi di documento e le prove presenti e restituisce lo stato: logica pura, senza database. Uno stato salvato andrebbe aggiornato ogni notte e sarebbe sbagliato tra due aggiornamenti; uno calcolato è giusto il giorno in cui lo si legge.",
+    "c1.m":"La regola: per ogni requisito conta il documento valido più a lungo. Sotto i <em>30 giorni</em> è arancione, scaduto o mancante è rosso, e solo i requisiti obbligatori decidono il colore. Coperta da 6 test unitari.",
+    "c2.t":"Alternative, non solo documenti",
+    "c2.b":"L’ordinanza accetta la dichiarazione sui salari oppure, dal 2023, l’attestato ISAB al suo posto. I documenti sono quindi raggruppati per requisito (<code>requirement_group</code>), e un requisito è soddisfatto da uno qualsiasi dei suoi documenti. Una ditta con l’attestato ISAB non compare in rosso solo perché le manca anche la dichiarazione.",
+    "c3.t":"La catena è un albero",
+    "c3.b":"Ogni presenza su un cantiere ha un <code>parent_id</code> verso la presenza della ditta che l’ha incaricata. Una tabella piatta non può dire «lavora per l’elettricista»; un albero sì, a qualsiasi profondità. E cancellare un livello porta via anche quelli sotto.",
+    "c4.t":"L’anteprima è l’importazione vera, annullata",
+    "c4.b":"L’anteprima non è un secondo algoritmo che indovina che cosa farebbe l’importazione. Esegue esattamente lo stesso codice, nella stessa transazione, che alla fine viene marcata con <code>setRollbackOnly()</code>. Ciò che mostra l’anteprima è quindi, per costruzione, ciò che si salva alla conferma.",
+    "c5.t":"Il controllo conserva il passato",
+    "c5.b":"Al salvataggio di un controllo, lo stato di ogni dossier viene copiato nella riga del controllo. Un dossier completato domani non riscrive il fatto che oggi, in cantiere, era incompleto. È proprio la domanda di un controllo: che cosa si sapeva e quando.",
+    "c6.t":"Promemoria senza pianificatore e senza invio automatico",
+    "c6.b":"L’elenco dei promemoria si calcola all’apertura, dallo stesso stato della panoramica; non c’è un’elaborazione notturna. L’applicazione non invia nemmeno e-mail: apre il programma di posta dell’utente con il testo pronto. Un’e-mail sbagliata, inviata automaticamente a un subappaltatore, è peggio di una letta prima da una persona.",
+    "c7.t":"I dati della demo si ripristinano da soli",
+    "c7.b":"Un pulsante svuota le tabelle (<code>TRUNCATE</code>) e rilancia Flyway, che ricarica i dati inventati. Le date sono relative al giorno corrente, così la demo mostra sempre un documento che scade tra pochi giorni, non uno scaduto da un anno.",
+    "c8.t":"L’elenco dei documenti non è scritto nel codice",
+    "c8.b":"I tipi di documento stanno in una tabella: nome in tedesco e in francese, base legale, validità abituale e se sono obbligatori. L’elenco della demo segue le dichiarazioni modello della SECO e le raccomandazioni della Suva e porta la dicitura «esempio, non consulenza legale». Un’impresa vera lo stabilisce con la propria associazione professionale.",
+
+    "s4.title":"Misurato, non affermato",
+    "s4.lead":"Contato nel repository il giorno in cui è stata scritta questa pagina. Il metodo è descritto nel README, perché il prossimo conteggio sia lo stesso.",
+    "tbl.item":"Voce","tbl.value":"Valore","tbl.note":"Osservazione",
+    "m1.k":"Righe di codice","m1.n":"Java, TypeScript, HTML, SCSS, SQL",
+    "m2.k":"Test automatici","m2.n":"13 metodi di test nel backend, 2 spec nel frontend",
+    "m3.k":"Migrazioni del database","m3.n":"Flyway; l’ORM non modifica mai lo schema",
+    "m4.k":"Tipi di documento","m4.n":"in 7 requisiti, secondo SECO e Suva",
+    "m5.k":"Schermate","m5.n":"tra cui il controllo sul telefono e la pagina da stampare",
+    "m6.k":"Lingue dell’interfaccia","m6.n":"tedesco e francese, 144 chiavi ciascuna",
+
+    "s5.title":"Architettura",
+    "s5.lead":"Un nucleo Spring Boot e un unico database, in cui stanno anche le scansioni. Nessun servizio esterno: nulla lascia il server.",
+    "arch.surfaces":"Superfici",
+    "arch.core":"Nucleo",
+    "arch.store":"Archiviazione",
+    "arch.web":"Web (Angular 21)",
+    "arch.phone":"Telefono (la stessa app web, altro layout)",
+    "arch.excel":"Importazione Excel (Apache POI)",
+    "arch.mail":"E-mail tramite il programma dell’utente (mailto)",
+    "arch.core.node":"Spring Boot 4.1 — 16 servizi, 7 controller REST, JWT",
+    "arch.blob":"Scansioni conservate nel database (BYTEA)",
+
+    "foot.note":"Demo con dati inventati. Non è consulenza legale. Il codice sorgente si trova in un repository privato.",
+    "foot.updated":"Aggiornato: ottobre 2026"
+  },
+  en: {
+    "hero.eyebrow":"Web application · designed and built by one person · demo with invented data",
+    "hero.deck":"In Switzerland, the main contractor is liable for unpaid wages of all its subcontractors, down the whole chain — unless it can prove it requested and checked their documents. In many firms that proof is an Excel sheet coloured by hand. <strong>SoliCheck keeps each subcontractor's file and works out, every time it is opened, what is missing and what is about to expire.</strong>",
+    "hero.label":"Opening",
+    "hero.caption":"The overview: each site takes the colour of the weakest file in its chain, and below it is the list of firms that need to be asked for something. The same view appears below as fig. 3.",
+    "fact.role.k":"Role","fact.role.v":"Analysis, architecture, development",
+    "fact.period.k":"Period","fact.period.v":"October 2026",
+    "fact.scale.k":"Size","fact.scale.v":"6,023 lines, 15 tests",
+    "fact.state.k":"State","fact.state.v":"Working demo, invented data",
+
+    "s1.title":"What it does",
+    "s1.lead":"One process, end to end: from the Excel list to the proof you show at an inspection. Legal basis: Art. 5 of the Posted Workers Act (EntsG) and Art. 8b of its ordinance (EntsV).",
+    "cap.light.l":"Traffic light per site",
+    "cap.light.t":"Green: the file is complete. Orange: a document expires within the next 30 days. Red: a document is missing or has expired. A site takes the colour of the weakest file in its chain.",
+    "cap.chain.l":"The whole chain",
+    "cap.chain.t":"Liability also covers the subcontractors' subcontractors. Each firm sits under the one that hired it, however deep the chain goes.",
+    "cap.file.l":"Every firm's file",
+    "cap.file.t":"SECO declarations, Suva, AHV and BVG certificates, the ISAB certificate: what is valid, until when, who checked it and when, plus the scan of the document.",
+    "cap.mail.l":"Reminders in the firm's language",
+    "cap.mail.t":"For every firm with missing or expiring documents the email is ready, in German or French depending on the firm. It goes out from the user's own mail program; the application sends nothing by itself.",
+    "cap.check.l":"The on-site check",
+    "cap.check.t":"On a phone: tap the firms on site and add an unknown one. The application shows at once whose file is incomplete, and the check is saved with date and time.",
+    "cap.excel.l":"From Excel to proof",
+    "cap.excel.t":"The existing list is taken over as it is, with a preview before anything is saved. At the end: a printable page with all the proof for one site.",
+
+    "s2.title":"The application",
+    "s2.lead":"Screenshots of the demo, with invented data. Firms, people, addresses and UID numbers (CHE-000.000.1xx) are made up, and the email addresses end in .example, the domain reserved by RFC 2606. The application's interface exists in German and French: the French page shows the French screenshots, every other language the German ones.",
+    "fig.n1":"Fig. 1","fig.n2":"Fig. 2","fig.n3":"Fig. 3","fig.n4":"Fig. 4","fig.n5":"Fig. 5","fig.n6":"Fig. 6","fig.n7":"Fig. 7","fig.n8":"Fig. 8","fig.n9":"Fig. 9",
+    "fig.excel":"The starting point: the subcontractor list as many firms keep it. One row per firm, one column per document, the cells coloured by hand. The colour does not change by itself when a date passes.",
+    "fig.import":"The same file, imported. First you see only what would change: new firms, new sites, documents taken over. Nothing is saved until you confirm.",
+    "fig.dashboard":"The overview. Below the sites, the “Handlungsbedarf” (action needed) list: who is missing a document or has one about to expire, with the expiry date.",
+    "fig.chain":"The chain for one site. The staffing agency brought in by the electrician sits under him, and it is missing two documents. Exactly the case a table with one row per firm cannot show.",
+    "fig.list":"All subcontractors, the most urgent first, with the next expiry date.",
+    "fig.file":"One firm's file: every required document with its basis (Art. 8b EntsV or Suva's recommendation), its state and its date. The wage declaration can be replaced by the ISAB certificate, which is why both share a row. Missing optional documents are grey, not red.",
+    "fig.reminders":"The reminders: one per firm, not one per document. The firm from Romont gets the text in French, even though the interface is in German.",
+    "fig.check":"The on-site check on a phone, before and after saving. A firm working on site that is not in the chain shows up as “Nicht erfasst” (not registered): the most serious case, not the mildest.",
+    "fig.proof":"The proof for an inspection: every firm on one site, each document with its issue date, its validity and who checked it. Made for printing.",
+
+    "s3.title":"Design decisions",
+    "s3.lead":"The application is small. What is worth showing are the decisions underneath: each was made because the simpler option would, at some point, have given a wrong answer.",
+    "c1.t":"The state is computed, not stored",
+    "c1.b":"No column holds “complete” or “expired”. <code>DossierEvaluator</code> takes the document types and the evidence on file and returns the state: pure logic, no database. A stored state would need updating every night and would be wrong between two updates; a computed one is right on the day you read it.",
+    "c1.m":"The rule: for each requirement, the document valid longest counts. Under <em>30 days</em> it is orange, expired or missing it is red, and only mandatory requirements decide the colour. Covered by 6 unit tests.",
+    "c2.t":"Alternatives, not just documents",
+    "c2.b":"The ordinance accepts the wage declaration or, since 2023, the ISAB certificate in its place. Documents are therefore grouped by requirement (<code>requirement_group</code>), and a requirement is met by any of its documents. A firm with an ISAB certificate does not turn red just because it also lacks the declaration.",
+    "c3.t":"The chain is a tree",
+    "c3.b":"Every assignment on a site has a <code>parent_id</code> pointing to the assignment of the firm that hired it. A flat table cannot say “works for the electrician”; a tree can, at any depth. And deleting one level takes the ones below with it.",
+    "c4.t":"The preview is the real import, rolled back",
+    "c4.b":"The preview is not a second algorithm guessing what the import would do. It runs exactly the same code, in the same transaction, which is marked <code>setRollbackOnly()</code> at the end. What the preview shows is therefore, by construction, what gets saved when you confirm.",
+    "c5.t":"The check keeps the past",
+    "c5.b":"When a check is saved, the state of each file is copied into the check's row. A file completed tomorrow does not rewrite the fact that today, on site, it was incomplete. That is exactly the question at an inspection: what did you know, and when.",
+    "c6.t":"Reminders with no scheduler and no automatic sending",
+    "c6.b":"The reminder list is computed when it is opened, from the same state as the overview; there is no nightly job. Nor does the application send emails: it opens the user's mail program with the text ready. A wrong email sent automatically to a subcontractor is worse than one a person read first.",
+    "c7.t":"The demo data restores itself",
+    "c7.b":"One button empties the tables (<code>TRUNCATE</code>) and runs Flyway again, which reloads the invented data. Dates are relative to today, so the demo always shows a document expiring in a few days, not one that expired a year ago.",
+    "c8.t":"The document list is not written in code",
+    "c8.b":"The document types live in a table: name in German and French, legal basis, usual validity and whether they are mandatory. The demo's list follows SECO's model declarations and Suva's recommendations and carries the note “example, not legal advice”. A real firm settles it with its trade association.",
+
+    "s4.title":"Measured, not claimed",
+    "s4.lead":"Counted in the repository on the day this page was written. The method is in the README, so the next count is the same count.",
+    "tbl.item":"Item","tbl.value":"Value","tbl.note":"Note",
+    "m1.k":"Lines of code","m1.n":"Java, TypeScript, HTML, SCSS, SQL",
+    "m2.k":"Automated tests","m2.n":"13 test methods in the backend, 2 specs in the frontend",
+    "m3.k":"Database migrations","m3.n":"Flyway; the ORM never changes the schema",
+    "m4.k":"Document types","m4.n":"in 7 requirements, after SECO and Suva",
+    "m5.k":"Screens","m5.n":"including the phone check and the printable page",
+    "m6.k":"Interface languages","m6.n":"German and French, 144 keys each",
+
+    "s5.title":"Architecture",
+    "s5.lead":"A Spring Boot core and a single database, which also holds the scans. No external services: nothing leaves the server.",
+    "arch.surfaces":"Surfaces",
+    "arch.core":"Core",
+    "arch.store":"Storage",
+    "arch.web":"Web (Angular 21)",
+    "arch.phone":"Phone (the same web app, its own layout)",
+    "arch.excel":"Excel import (Apache POI)",
+    "arch.mail":"Email through the user's own program (mailto)",
+    "arch.core.node":"Spring Boot 4.1 — 16 services, 7 REST controllers, JWT",
+    "arch.blob":"Scans kept in the database (BYTEA)",
+
+    "foot.note":"Demo with invented data. Not legal advice. The source code is in a private repository.",
+    "foot.updated":"Updated: October 2026"
+  },
+  ro: {
+    "hero.eyebrow":"Aplicație web · proiectată și dezvoltată de o singură persoană · demo cu date inventate",
+    "hero.deck":"În Elveția, antrepriza generală răspunde pentru salariile neplătite de toți subcontractorii ei, pe tot lanțul — dacă nu poate dovedi că le-a cerut și verificat documentele. În multe firme, dovada aceasta e un tabel Excel colorat de mână. <strong>SoliCheck ține dosarul fiecărui subcontractor și calculează, la fiecare deschidere, ce lipsește și ce expiră.</strong>",
+    "hero.label":"Deschidere",
+    "hero.caption":"Tabloul de bord: fiecare șantier are culoarea celui mai slab dosar din lanțul lui, iar dedesubt stă lista firmelor de la care trebuie cerut ceva. Aceeași vedere apare ca fig. 3 mai jos.",
+    "fact.role.k":"Rol","fact.role.v":"Analiză, arhitectură, dezvoltare",
+    "fact.period.k":"Perioadă","fact.period.v":"Octombrie 2026",
+    "fact.scale.k":"Dimensiune","fact.scale.v":"6 023 de linii, 15 teste",
+    "fact.state.k":"Stadiu","fact.state.v":"Demo funcțional, date inventate",
+
+    "s1.title":"Ce face",
+    "s1.lead":"Un singur proces, de la capăt la capăt: de la lista din Excel până la dovada pe care o arăți la un control. Temeiul legal: art. 5 din legea detașării (EntsG) și art. 8b din ordonanța ei (EntsV).",
+    "cap.light.l":"Semafor pe șantiere",
+    "cap.light.t":"Verde: dosarul e complet. Portocaliu: un document expiră în următoarele 30 de zile. Roșu: un document lipsește sau a expirat. Un șantier ia culoarea celui mai slab dosar din lanțul lui.",
+    "cap.chain.l":"Tot lanțul",
+    "cap.chain.t":"Răspunderea acoperă și subcontractorii subcontractorilor. Fiecare firmă stă sub cea care a angajat-o, oricât de adânc ar merge lanțul.",
+    "cap.file.l":"Dosarul fiecărei firme",
+    "cap.file.t":"Declarațiile SECO, atestatele Suva, AVS și LPP, certificatul ISAB: ce e valabil, până când, cine l-a verificat și când, plus scanarea documentului.",
+    "cap.mail.l":"Memento-uri în limba firmei",
+    "cap.mail.t":"Pentru fiecare firmă cu documente lipsă sau pe cale să expire, emailul e gata scris, în germană sau în franceză, după firmă. Pleacă din programul de email al utilizatorului; aplicația nu trimite nimic singură.",
+    "cap.check.l":"Controlul pe șantier",
+    "cap.check.t":"Pe telefon: bifezi firmele prezente și adaugi una necunoscută. Aplicația arată imediat cine are dosarul incomplet, iar controlul se păstrează cu data și ora.",
+    "cap.excel.l":"De la Excel la dovadă",
+    "cap.excel.t":"Lista existentă se importă așa cum e, cu o previzualizare înainte de salvare. La capăt: o pagină de tipărit cu toate dovezile unui șantier.",
+
+    "s2.title":"Aplicația",
+    "s2.lead":"Capturi din demo, cu date inventate. Firmele, persoanele, adresele și numerele UID (CHE-000.000.1xx) sunt născocite, iar adresele de email se termină în .example, domeniul rezervat de RFC 2606. Interfața aplicației există în germană și în franceză: pagina în franceză arată capturile în franceză, celelalte limbi pe cele în germană.",
+    "fig.n1":"Fig. 1","fig.n2":"Fig. 2","fig.n3":"Fig. 3","fig.n4":"Fig. 4","fig.n5":"Fig. 5","fig.n6":"Fig. 6","fig.n7":"Fig. 7","fig.n8":"Fig. 8","fig.n9":"Fig. 9",
+    "fig.excel":"Punctul de plecare: lista subcontractorilor așa cum o țin multe firme. Un rând pe firmă, o coloană pe document, celulele colorate de mână. Culoarea nu se schimbă singură când trece o dată.",
+    "fig.import":"Același fișier, la import. Întâi apare doar ce s-ar schimba: firme noi, șantiere noi, documente preluate. Abia după confirmare se salvează ceva.",
+    "fig.dashboard":"Tabloul de bord. Sub șantiere, lista „Handlungsbedarf”: cine are un document lipsă sau pe cale să expire, cu data expirării.",
+    "fig.chain":"Lanțul unui șantier. Firma de personal angajată de electrician stă sub el, iar ei îi lipsesc două documente. Exact cazul pe care un tabel cu un rând pe firmă nu-l arată.",
+    "fig.list":"Toți subcontractorii, cei mai urgenți primii, cu următoarea dată de expirare.",
+    "fig.file":"Dosarul unei firme: fiecare document cerut, cu temeiul lui (art. 8b EntsV sau recomandarea Suva), starea și data. Declarația de salariu poate fi înlocuită de certificatul ISAB, de aceea apar pe același rând. Documentele opționale care lipsesc sunt gri, nu roșii.",
+    "fig.reminders":"Memento-urile: unul pentru fiecare firmă, nu pentru fiecare document. Firma din Romont primește textul în franceză, chiar dacă interfața e în germană.",
+    "fig.check":"Controlul pe șantier, pe telefon, înainte și după salvare. O firmă care lucrează pe șantier, dar nu e în lanț, apare ca „Nicht erfasst”: e cazul cel mai grav, nu cel mai ușor.",
+    "fig.proof":"Dovada pentru un control: toate firmele unui șantier, fiecare document cu data emiterii, valabilitatea și cine l-a verificat. Gândită pentru tipărire.",
+
+    "s3.title":"Decizii de proiectare",
+    "s3.lead":"Aplicația e mică. Ce merită arătat sunt deciziile de dedesubt: fiecare a fost luată pentru că varianta mai simplă ar fi dat, la un moment dat, un răspuns greșit.",
+    "c1.t":"Starea se calculează, nu se salvează",
+    "c1.b":"Nicio coloană nu ține „complet” sau „expirat”. <code>DossierEvaluator</code> primește tipurile de documente și dovezile existente și întoarce starea: logică pură, fără bază de date. O stare salvată ar trebui actualizată în fiecare noapte și ar fi greșită între două actualizări; una calculată e corectă în ziua în care o citești.",
+    "c1.m":"Regula: pentru fiecare cerință contează documentul valabil cel mai mult timp. Sub <em>30 de zile</em> e portocaliu, expirat sau lipsă e roșu, și doar cerințele obligatorii decid culoarea. Acoperită de 6 teste unitare.",
+    "c2.t":"Alternative, nu doar documente",
+    "c2.b":"Ordonanța acceptă declarația de salariu sau, din 2023, certificatul ISAB în locul ei. Documentele sunt deci grupate pe cerințe (<code>requirement_group</code>), iar o cerință e îndeplinită de oricare dintre documentele ei. O firmă cu certificat ISAB nu apare roșie doar pentru că nu are și declarația.",
+    "c3.t":"Lanțul e un arbore",
+    "c3.b":"Fiecare prezență pe un șantier are un <code>parent_id</code> spre prezența firmei care a angajat-o. Un tabel plat nu poate spune „lucrează pentru electrician”; un arbore poate, la orice adâncime. Iar ștergerea unui nivel le ia și pe cele de sub el.",
+    "c4.t":"Previzualizarea e importul adevărat, anulat",
+    "c4.b":"Previzualizarea nu e un al doilea algoritm care ghicește ce ar face importul. Rulează exact același cod, în aceeași tranzacție, care la final e marcată <code>setRollbackOnly()</code>. Ce vezi în previzualizare e, prin construcție, ce se salvează la confirmare.",
+    "c5.t":"Controlul păstrează trecutul",
+    "c5.b":"La salvarea unui control, starea fiecărui dosar e copiată în rândul controlului. Un dosar completat mâine nu rescrie faptul că azi, pe șantier, era incomplet. Exact asta e întrebarea la un control: ce știai și când.",
+    "c6.t":"Memento-uri fără planificator și fără trimitere automată",
+    "c6.b":"Lista de memento-uri se calculează la deschidere, din aceeași stare ca tabloul de bord; nu există un job de noapte. Aplicația nici nu trimite emailuri: deschide programul de email al utilizatorului cu textul gata scris. Un email greșit, trimis automat unui subcontractor, e mai rău decât unul citit întâi de un om.",
+    "c7.t":"Datele demo se refac singure",
+    "c7.b":"Un buton golește tabelele (<code>TRUNCATE</code>) și rulează din nou Flyway, care reîncarcă datele inventate. Datele sunt relative la ziua de azi, așa că demo-ul arată mereu un document care expiră peste câteva zile, nu unul expirat de un an.",
+    "c8.t":"Lista documentelor nu e scrisă în cod",
+    "c8.b":"Tipurile de documente stau într-un tabel: numele în germană și franceză, temeiul legal, valabilitatea implicită și dacă sunt obligatorii. Lista din demo urmează declarațiile-model SECO și recomandările Suva și poartă mențiunea „exemplu, nu consiliere juridică”. O firmă reală o stabilește împreună cu asociația ei profesională.",
+
+    "s4.title":"Măsurat, nu afirmat",
+    "s4.lead":"Numărat în depozit în ziua în care a fost scrisă această pagină. Metoda e descrisă în README, ca următoarea numărătoare să fie aceeași.",
+    "tbl.item":"Poziție","tbl.value":"Valoare","tbl.note":"Observație",
+    "m1.k":"Linii de cod","m1.n":"Java, TypeScript, HTML, SCSS, SQL",
+    "m2.k":"Teste automate","m2.n":"13 metode de test pe backend, 2 specificații pe frontend",
+    "m3.k":"Migrări de bază de date","m3.n":"Flyway; schema nu e modificată niciodată de ORM",
+    "m4.k":"Tipuri de documente","m4.n":"în 7 cerințe, după SECO și Suva",
+    "m5.k":"Ecrane","m5.n":"inclusiv controlul pe telefon și pagina de tipărit",
+    "m6.k":"Limbi de interfață","m6.n":"germană și franceză, câte 144 de chei",
+
+    "s5.title":"Arhitectură",
+    "s5.lead":"Un nucleu Spring Boot și o singură bază de date, în care stau și scanările. Fără servicii externe: nimic nu părăsește serverul.",
+    "arch.surfaces":"Suprafețe",
+    "arch.core":"Nucleu",
+    "arch.store":"Stocare",
+    "arch.web":"Web (Angular 21)",
+    "arch.phone":"Telefon (același web, alt aspect)",
+    "arch.excel":"Import Excel (Apache POI)",
+    "arch.mail":"Email prin programul utilizatorului (mailto)",
+    "arch.core.node":"Spring Boot 4.1 — 16 servicii, 7 controlere REST, JWT",
+    "arch.blob":"Scanări păstrate în baza de date (BYTEA)",
+
+    "foot.note":"Demo cu date inventate. Nu e consiliere juridică. Codul sursă se află într-un depozit privat.",
+    "foot.updated":"Actualizat: octombrie 2026"
+  }
+};
+
+const SUPPORTED = Object.keys(I18N);
+const STORE_KEY = "solicheck.presentation.lang";
+
+// The application's interface exists in German and French only: the French page shows
+// the French figures, every other language the German ones.
+const SHOT_LANG = { fr: "fr" };
+
+// Bumped whenever the figures are retaken: GitHub Pages serves them with
+// Cache-Control max-age=600 under the same addresses, so without a new token a
+// browser that has seen the page before goes on showing the figures it holds.
+const SHOTS_VERSION = "2026-10-12";
+
+function apply(lang){
+  const t = I18N[lang];
+  if(!t) return;
+  document.documentElement.lang = lang;
+  document.querySelectorAll("[data-t]").forEach(el=>{
+    const v = t[el.dataset.t];
+    if(v !== undefined) el.textContent = v;
+  });
+  document.querySelectorAll("[data-h]").forEach(el=>{
+    const v = t[el.dataset.h];
+    if(v !== undefined) el.innerHTML = v;
+  });
+  document.querySelectorAll(".langs button").forEach(b=>{
+    b.setAttribute("aria-pressed", String(b.dataset.lang === lang));
+  });
+  document.querySelectorAll("img[data-shot]").forEach(img=>{
+    const next = "shots/" + (SHOT_LANG[lang] || "de") + "/" + img.dataset.shot + ".png?v=" + SHOTS_VERSION;
+    if(img.getAttribute("src") !== next) img.setAttribute("src", next);
+  });
+  try{ localStorage.setItem(STORE_KEY, lang); }catch(e){}
+}
+
+function initialLang(){
+  const hash = location.hash.replace("#","").toLowerCase();
+  if(SUPPORTED.includes(hash)) return hash;
+  try{
+    const saved = localStorage.getItem(STORE_KEY);
+    if(saved && SUPPORTED.includes(saved)) return saved;
+  }catch(e){}
+  for(const l of (navigator.languages || [navigator.language || ""])){
+    const code = String(l).slice(0,2).toLowerCase();
+    if(SUPPORTED.includes(code)) return code;
+  }
+  return SUPPORTED.includes("de") ? "de" : SUPPORTED[0];
+}
+
+document.querySelectorAll(".langs button").forEach(b=>{
+  if(!SUPPORTED.includes(b.dataset.lang)) b.hidden = true;
+  b.addEventListener("click", ()=>apply(b.dataset.lang));
+});
+window.addEventListener("hashchange", ()=>{
+  const h = location.hash.replace("#","").toLowerCase();
+  if(SUPPORTED.includes(h)) apply(h);
+});
+apply(initialLang());
+</script>
+
+</body>
+</html>
