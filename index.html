@@ -3,9 +3,9 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>SoliCheck</title>
-<meta name="description" content="SoliCheck — the main contractor's subcontractor file under Swiss joint liability: status computed per document, the whole chain, on-site checks, Excel import. A demo with invented data.">
-<meta property="og:title" content="SoliCheck">
+<title>Subunternehmer-Dossier</title>
+<meta name="description" content="Subunternehmer-Dossier — the main contractor's subcontractor file under Swiss joint liability: status computed per document, the whole chain, on-site checks, Excel import. A demo with invented data.">
+<meta property="og:title" content="Subunternehmer-Dossier">
 <meta property="og:description" content="The subcontractor file under Swiss joint liability, as a web application. A demo with invented data.">
 <meta property="og:type" content="website">
 <meta name="robots" content="noindex">
@@ -258,6 +258,8 @@
     section{break-inside:auto}
     .clause,.cap,.practice{break-inside:avoid}
   }
+  /* this page: a longer name than KIA Home, so a smaller title that still fits a phone */
+  h1{font-size:clamp(2.1rem,7.4vw,5.25rem); overflow-wrap:break-word}
 </style>
 </head>
 
@@ -265,7 +267,7 @@
 
 <div class="bar">
   <div class="wrap bar__in">
-    <div class="mark"><i></i>SoliCheck</div>
+    <div class="mark"><i></i><span data-t="app.name">Subunternehmer-Dossier</span></div>
     <div class="langs" role="group" aria-label="Sprache / Langue / Lingua / Language / Limba">
       <button type="button" data-lang="de" aria-pressed="false">DE</button>
       <button type="button" data-lang="fr" aria-pressed="false">FR</button>
@@ -278,7 +280,7 @@
 
 <header class="wrap hero">
   <p class="eyebrow" data-t="hero.eyebrow"></p>
-  <h1>SoliCheck</h1>
+  <h1 data-t="app.name">Subunternehmer-Dossier</h1>
   <p class="deck" data-h="hero.deck"></p>
 
   <dl class="facts">
@@ -474,8 +476,9 @@
 <script>
 const I18N = {
   de: {
+    "app.name":"Subunternehmer-Dossier",
     "hero.eyebrow":"Webanwendung · von einer Person konzipiert und entwickelt · Demo mit erfundenen Daten",
-    "hero.deck":"In der Schweiz haftet der Erstunternehmer für nicht bezahlte Löhne aller seiner Subunternehmer, über die ganze Kette — ausser er kann belegen, dass er ihre Nachweise eingeholt und geprüft hat. In vielen Betrieben ist dieser Beleg eine von Hand eingefärbte Excel-Liste. <strong>SoliCheck führt das Dossier jedes Subunternehmers und berechnet bei jedem Aufruf, was fehlt und was abläuft.</strong>",
+    "hero.deck":"In der Schweiz haftet der Erstunternehmer für nicht bezahlte Löhne aller seiner Subunternehmer, über die ganze Kette — ausser er kann belegen, dass er ihre Nachweise eingeholt und geprüft hat. In vielen Betrieben ist dieser Beleg eine von Hand eingefärbte Excel-Liste. <strong>Die Anwendung führt das Dossier jedes Subunternehmers und berechnet bei jedem Aufruf, was fehlt und was abläuft.</strong>",
     "hero.label":"Auftakt",
     "hero.caption":"Die Übersicht: Jede Baustelle trägt die Farbe des schwächsten Dossiers in ihrer Kette, darunter steht, bei wem etwas anzufordern ist. Dieselbe Ansicht erscheint unten als Abb. 3.",
     "fact.role.k":"Rolle","fact.role.v":"Analyse, Architektur, Entwicklung",
@@ -557,8 +560,9 @@ const I18N = {
     "foot.updated":"Aktualisiert: Oktober 2026"
   },
   fr: {
+    "app.name":"Dossier sous-traitants",
     "hero.eyebrow":"Application web · conçue et développée par une seule personne · démo avec des données fictives",
-    "hero.deck":"En Suisse, l’entrepreneur contractant répond des salaires impayés de tous ses sous-traitants, sur toute la chaîne — sauf s’il peut prouver qu’il a demandé et vérifié leurs justificatifs. Dans beaucoup d’entreprises, cette preuve est un tableau Excel coloré à la main. <strong>SoliCheck tient le dossier de chaque sous-traitant et calcule, à chaque ouverture, ce qui manque et ce qui expire.</strong>",
+    "hero.deck":"En Suisse, l’entrepreneur contractant répond des salaires impayés de tous ses sous-traitants, sur toute la chaîne — sauf s’il peut prouver qu’il a demandé et vérifié leurs justificatifs. Dans beaucoup d’entreprises, cette preuve est un tableau Excel coloré à la main. <strong>L’application tient le dossier de chaque sous-traitant et calcule, à chaque ouverture, ce qui manque et ce qui expire.</strong>",
     "hero.label":"Ouverture",
     "hero.caption":"La vue d’ensemble : chaque chantier prend la couleur du dossier le plus faible de sa chaîne, et en dessous figure la liste des entreprises à qui il faut demander quelque chose. La même vue apparaît plus bas comme fig. 3.",
     "fact.role.k":"Rôle","fact.role.v":"Analyse, architecture, développement",
@@ -640,8 +644,9 @@ const I18N = {
     "foot.updated":"Mis à jour : octobre 2026"
   },
   it: {
+    "app.name":"Subunternehmer-Dossier",
     "hero.eyebrow":"Applicazione web · progettata e sviluppata da una sola persona · demo con dati inventati",
-    "hero.deck":"In Svizzera l’impresa appaltatrice risponde dei salari non pagati di tutti i suoi subappaltatori, lungo tutta la catena — a meno che possa dimostrare di averne chiesto e verificato i documenti. In molte imprese questa prova è una tabella Excel colorata a mano. <strong>SoliCheck tiene il dossier di ogni subappaltatore e calcola, a ogni apertura, che cosa manca e che cosa scade.</strong>",
+    "hero.deck":"In Svizzera l’impresa appaltatrice risponde dei salari non pagati di tutti i suoi subappaltatori, lungo tutta la catena — a meno che possa dimostrare di averne chiesto e verificato i documenti. In molte imprese questa prova è una tabella Excel colorata a mano. <strong>L’applicazione tiene il dossier di ogni subappaltatore e calcola, a ogni apertura, che cosa manca e che cosa scade.</strong>",
     "hero.label":"Apertura",
     "hero.caption":"La panoramica: ogni cantiere prende il colore del dossier più debole della sua catena, e sotto c’è l’elenco delle ditte a cui va chiesto qualcosa. La stessa vista compare più sotto come fig. 3.",
     "fact.role.k":"Ruolo","fact.role.v":"Analisi, architettura, sviluppo",
@@ -723,8 +728,9 @@ const I18N = {
     "foot.updated":"Aggiornato: ottobre 2026"
   },
   en: {
+    "app.name":"Subunternehmer-Dossier",
     "hero.eyebrow":"Web application · designed and built by one person · demo with invented data",
-    "hero.deck":"In Switzerland, the main contractor is liable for unpaid wages of all its subcontractors, down the whole chain — unless it can prove it requested and checked their documents. In many firms that proof is an Excel sheet coloured by hand. <strong>SoliCheck keeps each subcontractor's file and works out, every time it is opened, what is missing and what is about to expire.</strong>",
+    "hero.deck":"In Switzerland, the main contractor is liable for unpaid wages of all its subcontractors, down the whole chain — unless it can prove it requested and checked their documents. In many firms that proof is an Excel sheet coloured by hand. <strong>The application keeps each subcontractor's file and works out, every time it is opened, what is missing and what is about to expire.</strong>",
     "hero.label":"Opening",
     "hero.caption":"The overview: each site takes the colour of the weakest file in its chain, and below it is the list of firms that need to be asked for something. The same view appears below as fig. 3.",
     "fact.role.k":"Role","fact.role.v":"Analysis, architecture, development",
@@ -806,8 +812,9 @@ const I18N = {
     "foot.updated":"Updated: October 2026"
   },
   ro: {
+    "app.name":"Subunternehmer-Dossier",
     "hero.eyebrow":"Aplicație web · proiectată și dezvoltată de o singură persoană · demo cu date inventate",
-    "hero.deck":"În Elveția, antrepriza generală răspunde pentru salariile neplătite de toți subcontractorii ei, pe tot lanțul — dacă nu poate dovedi că le-a cerut și verificat documentele. În multe firme, dovada aceasta e un tabel Excel colorat de mână. <strong>SoliCheck ține dosarul fiecărui subcontractor și calculează, la fiecare deschidere, ce lipsește și ce expiră.</strong>",
+    "hero.deck":"În Elveția, antrepriza generală răspunde pentru salariile neplătite de toți subcontractorii ei, pe tot lanțul — dacă nu poate dovedi că le-a cerut și verificat documentele. În multe firme, dovada aceasta e un tabel Excel colorat de mână. <strong>Aplicația ține dosarul fiecărui subcontractor și calculează, la fiecare deschidere, ce lipsește și ce expiră.</strong>",
     "hero.label":"Deschidere",
     "hero.caption":"Tabloul de bord: fiecare șantier are culoarea celui mai slab dosar din lanțul lui, iar dedesubt stă lista firmelor de la care trebuie cerut ceva. Aceeași vedere apare ca fig. 3 mai jos.",
     "fact.role.k":"Rol","fact.role.v":"Analiză, arhitectură, dezvoltare",
@@ -891,7 +898,7 @@ const I18N = {
 };
 
 const SUPPORTED = Object.keys(I18N);
-const STORE_KEY = "solicheck.presentation.lang";
+const STORE_KEY = "subdossier.presentation.lang";
 
 // The application's interface exists in German and French only: the French page shows
 // the French figures, every other language the German ones.
@@ -900,7 +907,7 @@ const SHOT_LANG = { fr: "fr" };
 // Bumped whenever the figures are retaken: GitHub Pages serves them with
 // Cache-Control max-age=600 under the same addresses, so without a new token a
 // browser that has seen the page before goes on showing the figures it holds.
-const SHOTS_VERSION = "2026-10-12";
+const SHOTS_VERSION = "2026-10-12b";
 
 function apply(lang){
   const t = I18N[lang];

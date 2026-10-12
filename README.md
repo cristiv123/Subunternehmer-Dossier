@@ -1,12 +1,12 @@
-# SoliCheck
+# Subunternehmer-Dossier
 
-A presentation of **SoliCheck**, a web application for the main contractor's
+A presentation of **Subunternehmer-Dossier** (in French: *Dossier sous-traitants*), a web application for the main contractor's
 subcontractor file under Swiss joint liability (Art. 5 EntsG, Art. 8b EntsV): the
 document state computed per firm, the whole subcontractor chain, reminders in each
 firm's language, an on-site check on a phone, Excel import with a preview, and a
 printable proof per site.
 
-**→ https://cristiv123.github.io/SoliCheck/** — in German, French, Italian, English and
+**→ https://cristiv123.github.io/Subunternehmer-Dossier/** — in German, French, Italian, English and
 Romanian.
 
 This repository contains the presentation page only. The application's source is
